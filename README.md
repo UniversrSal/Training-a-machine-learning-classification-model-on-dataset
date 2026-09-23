@@ -1,4 +1,4 @@
-# Perceptron Classifier & Error Surface Analysis
+# Error Surface Analysis
 
 A custom Python implementation of a vector-based Perceptron model built from scratch using NumPy and Pandas. This project trains a binary classifier on a normalized dataset (Car vs. SUV) and visualizes the error rate surface across a 2D parameter grid.
 
