@@ -17,7 +17,7 @@ import pandas as pd;
 # Function definitions for reading data and training the model
 def read_csv_convert_to_numpy(fileName='carSUV_normalized.csv'):
 
-    filepath = Path('C:\\Users\\monem\\OneDrive\\Documents\\Homework2') / fileName #path of folder combined with file name
+    filepath = Path(__file__).parent / fileName
     df = pd.read_csv(filepath)
 
     # outputs: 
@@ -57,8 +57,7 @@ def train_and_evaluate(numpy_x, numpy_y, n_epochs=20, c=0.01):
             y_i = numpy_y[i]
             prediction_i = np.sign(x_i @ w)
             if prediction_i != y_i: #if prediction doesnt equal 
-                w = w + c * y_i * x_i #update/nudge w toward correcting this misclassified sample
-
+                w = w + c * y_i * x_i.reshape(-1, 1) #update/nudge w toward correcting this misclassified sample
         current_error = calc_error_rate_for_single_vector_w(w, numpy_x, numpy_y)
         print(current_error)
 
@@ -67,19 +66,20 @@ def train_and_evaluate(numpy_x, numpy_y, n_epochs=20, c=0.01):
 
 # CMSC 606 only: Definition of functions for plotting errors for a grid of possible model weights
 def function_error_rate_2D(w1_range, w2_range, numpy_x, numpy_y):
-    #input: range of values w1 to inspect, as a python list, range of value w2 to inspect, as numpy 1D arrays; dataset (numpy_x, numpy_y) as above
-    
-    #output: a 2D numpy array, with rows corresponding to possible values of w1, columns corresponding to possible values of w2, 
-    # for each cell containing the error rate for that specific w1,w2 weights, for the dataset (use: calc_error_rate_for_single_vector_w)
-    
-    error_rates_all_ws = np.ones((len(w1_range),len(w2_range))) #placeholder code putting 100% error on each w1,w2 combination; you should remove it
-    # YOUR CODE HERE
-    # use np.meshgrid instead of nested for loops
+    W1, W2, = np.meshgrid(w1_range, w2_range)
 
-    # your code will be passed on to functions plot3D_function_on_grid and plot_function_on_grid
-    # the output should look like in the slides
+    counts = np.zeros(W1.shape)   # start with zero mistakes everywhere
 
-    return error_rates_all_ws
+    for k in range(numpy_x.shape[0]):  # loop over all samples
+        x_k = numpy_x[k] #represent the k-th sample as a 1D array of shape (2,)
+        y_k = numpy_y[k] #represent the k-th label as a 1D array of shape (1,)
+        predictions_k = np.sign(x_k[0] * W1 + x_k[1] * W2) # math of the linear model applied to all (w1,w2) pairs for this sample
+        wrong_k = (predictions_k != y_k) #predictions_k is a 2D array of shape (len(w1_range), len(w2_range)), wrong_k is a boolean array of the same shape
+        counts = counts + wrong_k #count the number of mistakes for each (w1,w2) pair
+
+    error_rates_all_ws = counts / numpy_x.shape[0]  # divide by total number of samples to get the rate
+   
+    return error_rates_all_ws #gives the error rate for each (w1,w2) pair in the grid defined by w1_range and w2_range
 
 
 if __name__ == "__main__":
@@ -199,3 +199,18 @@ if __name__ == "__main__":
     plt.show()
     ax = plot3D_function_on_grid(function_error_rate_2D, numpy_x, numpy_y);
     plt.show()
+
+    numpy_x, numpy_y = read_csv_convert_to_numpy('carSUV_normalized.csv')
+w = np.array([[0.5], [-0.3]])
+print(calc_error_rate_for_single_vector_w(w, numpy_x, numpy_y))
+
+w1_small = np.arange(-1, 1, 0.5)
+w2_small = np.arange(-1, 1, 0.5)
+result = np.ones((len(w1_small), len(w2_small)))
+
+for i in range(len(w1_small)):
+    for j in range(len(w2_small)):
+        err = calc_error_rate_for_single_vector_w(np.array([[w1_small[i]], [w2_small[j]]]), numpy_x, numpy_y)
+        result[i, j] = err
+
+print(result)
